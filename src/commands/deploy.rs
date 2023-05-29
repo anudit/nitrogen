@@ -179,9 +179,14 @@ pub async fn deploy(
     cpu_count: u64,
     memory: Option<u64>,
     debug_mode: bool,
+    custom_url: &String,
 ) -> Result<Output, Error> {
     let this_stack = utilities::get_stack(client, stack_name).await?;
-    let url = utilities::get_instance_url(&this_stack).await?;
+    let mut url = utilities::get_instance_url(&this_stack).await?;
+
+    if custom_url != "" {
+        url = custom_url.to_string()
+    }
 
     // If enclave memory not specified, default to 5x eif size
     let metadata = fs::metadata(eif)?;

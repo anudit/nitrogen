@@ -83,6 +83,9 @@ enum Commands {
         /// Debug mode
         #[arg(long, default_value_t = false)]
         debug_mode: bool,
+        /// Override ec2 url
+        #[arg(long, default_value_t =  String::from(""))]
+        custom_url: String,
     },
 
     /// Get the logs from an enclave in debug mode.
@@ -196,12 +199,20 @@ async fn main() -> Result<(), Error> {
             cpu_count,
             memory,
             debug_mode,
+            custom_url,
         } => {
             info!(eif, "Deploying EIF to {}", name);
             let shared_config = aws_config::from_env().load().await;
             let client = Client::new(&shared_config);
             let out = deploy(
-                &client, &name, &eif, &ssh_key, cpu_count, memory, debug_mode,
+                &client,
+                &name,
+                &eif,
+                &ssh_key,
+                cpu_count,
+                memory,
+                debug_mode,
+                &custom_url,
             )
             .await?;
             debug!("{:?}", out);
@@ -288,7 +299,17 @@ async fn main() -> Result<(), Error> {
             info!("Sleeping for 20s to give ec2 instance a chance to boot...");
             tokio::time::sleep(Duration::from_secs(20)).await;
 
-            let out = deploy(&client, &stack_name, eif_path, &private_key, 2, None, false).await?;
+            let out = deploy(
+                &client,
+                &stack_name,
+                eif_path,
+                &private_key,
+                2,
+                None,
+                false,
+                &String::from(""),
+            )
+            .await?;
 
             info!("{:?}", out);
 
